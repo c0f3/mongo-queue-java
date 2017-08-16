@@ -1,6 +1,6 @@
 # QueueBox - async queue engine based on MongoDB
 
-[![Build Status](https://travis-ci.org/gaillard/mongo-queue-java.png)](https://travis-ci.org/gaillard/mongo-queue-java)
+[ ![Download](https://api.bintray.com/packages/infon-zed-oss/infon-zed-oss/QueueBox/images/download.svg) ](https://bintray.com/infon-zed-oss/infon-zed-oss/QueueBox/_latestVersion)
 
 Async java message queue using MongoDB as a backend.    
 
