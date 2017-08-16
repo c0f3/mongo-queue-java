@@ -29,7 +29,8 @@ Fake MongoDB added to project ([Fongo](https://github.com/fakemongo/fongo)) to b
  * creating and sending some simple message presented as POJO
 
 ```java
-public static void main(String[] args) throws InterruptedException, IOException {
+public final class Main {
+    public static void main(String[] args) throws InterruptedException, IOException {
         final String defaultSource = "just_source";
         final String defaultDestination = "just_destination";
 
@@ -68,6 +69,21 @@ public static void main(String[] args) throws InterruptedException, IOException 
         System.out.println("send packet: "+pojo);
 
     }
+}
+```
+
+Also you can use just core library without wrapper, as it described in [original README](https://github.com/gaillard/mongo-queue-java).
+
+```java
+public final class Main {
+
+    public static void main(final String[] args) throws UnknownHostException {
+        final Queue queue = new Queue(new MongoClient().getDB("testing").getCollection("messages"));
+        queue.send(new BasicDBObject());
+        final BasicDBObject message = queue.get(new BasicDBObject(), 60);
+        queue.ack(message);
+    }
+}
 ```
 
 ## Jar

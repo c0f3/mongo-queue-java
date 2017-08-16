@@ -31,7 +31,7 @@
 
     <groupId>ru.infon.oss</groupId>
     <artifactId>queue-box</artifactId>
-    <version>0.0.2</version>
+    <version>0.0.3</version>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>

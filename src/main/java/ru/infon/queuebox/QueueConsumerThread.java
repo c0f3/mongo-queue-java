@@ -27,7 +27,7 @@ class QueueConsumerThread<T> {
 
     private QueueConsumer<T> consumer;
     private QueuePacketHolder<T> packetHolder;
-    private Timer timer = new Timer();
+    private Timer timer;
     private int fetchDelayMills = DEFAULT_FETCH_DELAY_MILLS;
 
     QueueConsumerThread(
@@ -45,6 +45,7 @@ class QueueConsumerThread<T> {
                     properties.getProperty(PROPERTY_FETCH_DELAY_MILLS)
             );
         } catch (NumberFormatException | NullPointerException ignore) {}
+        timer = new Timer("QCT_timer_"+consumer.getConsumerId());
     }
 
     void start() {
@@ -67,8 +68,8 @@ class QueueConsumerThread<T> {
     private void onComplete(Collection<MessageContainer<T>> result) {
         if(result.size()>0) {
             LOG.info(String.format(
-                    "worker received %d events for service %s",
-                    result.size(), consumer
+                    "worker received %d events for consumer %s",
+                    result.size(), consumer.getConsumerId()
             ));
         }
         if(result.size()==0) {

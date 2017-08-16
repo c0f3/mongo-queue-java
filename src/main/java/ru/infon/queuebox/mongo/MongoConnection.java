@@ -127,6 +127,10 @@ public class MongoConnection {
                     }
                     Object methodParam = ConvertUtils.convert(value, method.getParameterTypes()[0]);
                     method.invoke(optionsBuilder, methodParam);
+                    LOGGER.info(String.format(
+                            "MongoClientOptions parameter set: %s => %s",
+                            key, value
+                    ));
                 } catch (Exception e) {
                     LOGGER.log(Level.WARNING, e.getMessage(), e);
                 }
