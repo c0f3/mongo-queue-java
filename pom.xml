@@ -1,4 +1,5 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <name>QueueBox library</name>
@@ -17,8 +18,8 @@
         <connection>scm:git:https://github.com/kostapc/mongo-queue-java.git</connection>
         <developerConnection>scm:git:https://github.com/kostapc/mongo-queue-java.git</developerConnection>
         <url>https://github.com/kostapc/mongo-queue-java</url>
-      <tag>queue-box-0.1.0</tag>
-  </scm>
+        <tag>queue-box-0.1.0</tag>
+    </scm>
 
     <developers>
         <developer>
@@ -105,8 +106,8 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.8.1</version>
                 <configuration>
-                  <source>1.8</source>
-                  <target>1.8</target>
+                    <source>1.8</source>
+                    <target>1.8</target>
                 </configuration>
             </plugin>
             <plugin>
@@ -184,8 +185,7 @@
         </snapshotRepository>
         <repository>
             <id>sonatype-nexus-staging</id>
-            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/
-            </url>
+            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
         </repository>
     </distributionManagement>
 
