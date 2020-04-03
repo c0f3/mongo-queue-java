@@ -14,6 +14,6 @@ public class MongoContainer extends GenericContainer<MongoContainer> {
         addEnv("MONGO_INITDB_DATABASE", DATABASE);
         addEnv("MONGO_INITDB_ROOT_USERNAME", USERNAME);
         addEnv("MONGO_INITDB_ROOT_PASSWORD", PASSWORD);
-        addExposedPort(27017);
+        addExposedPort(ORIGINAL_PORT);
     }
 }

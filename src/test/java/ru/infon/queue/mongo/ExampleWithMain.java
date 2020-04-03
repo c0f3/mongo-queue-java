@@ -45,7 +45,7 @@ public class ExampleWithMain {
             }
         });
 
-        Future future = queueBox.queue(pojo);
+        Future<JustPojoRouted> future = queueBox.queue(pojo);
 
         while (!future.isDone()) {
             Thread.sleep(5);

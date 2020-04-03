@@ -1,3 +1,8 @@
+## version 0.1.1
+
+* anonymous connection
+
+
 ## version 0.1.0
 
 * fixed index issue with mongo 4.2
