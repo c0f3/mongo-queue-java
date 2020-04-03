@@ -18,10 +18,11 @@ Unit tests based on real MongoDB with testcontainers.
  * Distributes across machines via MongoDB
  * Message priority
  * Delayed messages
+ * Message routing
  * Running message timeout and redeliver
  * Atomic acknowledge and send together
  * Easy index creation based only on payload
- * work with the latest MongoDB 3.2 
+ * work with the latest MongoDB (4.2)
  * you can use any other storage sytem by implementing interface
 
 ## Usage example

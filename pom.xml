@@ -2,7 +2,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <name>QueueBox library</name>
+    <name>QueueBox library - async queue with routing</name>
     <description>
         Async message queue library using MongoDB as a backend with minimal set of dependencies.
     </description>
@@ -12,23 +12,23 @@
             <url>https://opensource.org/licenses/MIT</url>
         </license>
     </licenses>
-    <url>https://github.com/kostapc/mongo-queue-java</url>
+    <url>https://github.com/c0f3/queue-box</url>
 
     <scm>
-        <connection>scm:git:https://github.com/kostapc/mongo-queue-java.git</connection>
-        <developerConnection>scm:git:https://github.com/kostapc/mongo-queue-java.git</developerConnection>
-        <url>https://github.com/kostapc/mongo-queue-java</url>
+        <connection>https://github.com/c0f3/queue-box.git</connection>
+        <developerConnection>https://github.com/c0f3/queue-box.git</developerConnection>
+        <url>https://github.com/c0f3/queue-box</url>
         <tag>queue-box-0.1.0</tag>
     </scm>
 
     <developers>
         <developer>
-            <name>Infon Team</name>
-            <email>opensource@infon.ru</email>
-        </developer>
-        <developer>
             <name>c0f3 labs</name>
             <email>labs@c0f3.net</email>
+        </developer>
+        <developer>
+            <name>Infon Team</name>
+            <email>opensource@infon.ru</email>
         </developer>
     </developers>
 
