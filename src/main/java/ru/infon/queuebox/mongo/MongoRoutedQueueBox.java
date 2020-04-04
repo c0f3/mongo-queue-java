@@ -23,7 +23,8 @@ public class MongoRoutedQueueBox<T extends RoutedMessage> extends QueueBox<T> {
             this.withQueueBehave(new RoutedQueueBehave<>(properties, packetClass));
         }
         if (this.executor==null) {
-            this.executor = Executors.newFixedThreadPool(behave.getThreadsCount());
+            // additional thread for timer and common tasks
+            this.executor = Executors.newFixedThreadPool(behave.getThreadsCount()+1);
         }
         super.start();
     }

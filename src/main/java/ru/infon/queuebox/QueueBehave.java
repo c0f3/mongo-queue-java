@@ -8,7 +8,6 @@ import java.util.Collection;
  * 2017 Infon ZED
  *
  * Class implemented whis interface provide in fact queue storage and storage behave.
- * TODO: change class and packages names to avoid fixing on just Mongo storage;
  **/
 public interface QueueBehave<T> {
 

@@ -12,6 +12,7 @@ import java.util.concurrent.ExecutorService;
 
 /**
  * 28.03.2017
+ *
  * @author KostaPC
  * 2017 Infon ZED
  */
@@ -22,7 +23,7 @@ public class QueueEngine<T> implements QueuePacketHolder<T> {
     private final QueueBehave<T> queueBehave;
     private final ExecutorService executor;
     private final Properties properties;
-    private Map<String, QueueConsumerThread> listenerThreads = new ConcurrentHashMap<>();
+    private Map<String, QueueConsumerThread<T>> listenerThreads = new ConcurrentHashMap<>();
 
     public QueueEngine(
             Properties properties,
@@ -56,7 +57,7 @@ public class QueueEngine<T> implements QueuePacketHolder<T> {
 
     public void registerConsumer(QueueConsumer<T> consumer) {
         if (listenerThreads.containsKey(consumer.getConsumerId())) {
-            throw new IllegalStateException("consumer with id \""+consumer.getConsumerId()+"\" already registered");
+            throw new IllegalStateException("consumer with id \"" + consumer.getConsumerId() + "\" already registered");
         }
         QueueConsumerThread<T> consumerThread = new QueueConsumerThread<>(
                 properties,
