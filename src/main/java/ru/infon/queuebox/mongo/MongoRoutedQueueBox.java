@@ -20,7 +20,7 @@ public class MongoRoutedQueueBox<T extends RoutedMessage> extends QueueBox<T> {
     @Override
     public void start() {
         if (behave==null) {
-            this.withQueueBehave(new RoutedQueueBehave<>(properties, packetClass));
+            this.withQueueBehave(new MongoRoutedQueueBehave<>(properties, packetClass));
         }
         if (this.executor==null) {
             // additional thread for timer and common tasks

@@ -4,9 +4,8 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
 import static ru.infon.queuebox.QueueBox.PROPERTY_FETCH_DELAY_MILLS;
@@ -25,9 +24,10 @@ class QueueConsumerThread<T> {
 
     private ExecutorService executor;
 
-    private QueueConsumer<T> consumer;
-    private QueuePacketHolder<T> packetHolder;
-    private Timer timer;
+    private final QueueConsumer<T> consumer;
+    private final QueuePacketHolder<T> packetHolder;
+    private final Semaphore semaphore;
+    private final Timer timer;
     private int fetchDelayMills = DEFAULT_FETCH_DELAY_MILLS;
 
     QueueConsumerThread(
@@ -45,6 +45,7 @@ class QueueConsumerThread<T> {
             );
         } catch (NumberFormatException | NullPointerException ignore) {
         }
+        semaphore = new Semaphore(packetHolder.getFetchLimit());
         timer = new Timer("QCT_timer_" + consumer.getConsumerId());
     }
 
@@ -76,6 +77,7 @@ class QueueConsumerThread<T> {
         if (result.size() == 0) {
             schedule(() -> runTask(this::payload), fetchDelayMills);
         } else {
+
             Iterator<MessageContainer<T>> it = result.iterator();
             while (!result.isEmpty()) {
                 if (!it.hasNext()) {
@@ -84,21 +86,30 @@ class QueueConsumerThread<T> {
                 // if consumer has no free threads - process will wait for
                 MessageContainer<T> packet = it.next();
                 try {
+                    semaphore.acquire();
                     executor.execute(() -> {
                         LOG.debug(String.format(
                                 "processing message %s with data: \"%s\"",
                                 packet.getId(), packet.getMessage()
                         ));
                         packet.setCallback(
-                                (me) -> packetHolder.ack(me),
-                                (me) -> packetHolder.reset(me)
+                                packetHolder::ack,
+                                packetHolder::reset
                         );
                         consumer.onPacket(packet);
+                        semaphore.release();
                     });
                     it.remove();
                 } catch (RejectedExecutionException rejected) {
                     LOG.warn(String.format(
-                            "task {%s} was rejected by threadpool ... trying again",
+                            "task {%s} was rejected by threadpool ... trying again later",
+                            packet.getId()
+                    ));
+                    packetHolder.reset(packet);
+                    it.remove();
+                } catch (InterruptedException interrupted) {
+                    LOG.warn(String.format(
+                            "task {%s} cannot be executed due to threads policy ... trying again later",
                             packet.getId()
                     ));
                     packetHolder.reset(packet);

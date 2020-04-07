@@ -41,6 +41,11 @@ public class QueueEngine<T> implements QueuePacketHolder<T> {
     }
 
     @Override
+    public int getFetchLimit() {
+        return queueBehave.getFetchLimit();
+    }
+
+    @Override
     public Collection<MessageContainer<T>> fetch(QueueConsumer<T> consumer) {
         return queueBehave.find(consumer);
     }

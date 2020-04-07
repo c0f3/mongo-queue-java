@@ -9,6 +9,7 @@ import java.util.Collection;
  **/
 public interface QueuePacketHolder<T> {
 
+    int getFetchLimit();
     Collection<MessageContainer<T>> fetch(QueueConsumer<T> consumer);
     void ack(MessageContainer<T> packet);
     void reset(MessageContainer<T> packet);

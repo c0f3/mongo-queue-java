@@ -12,6 +12,7 @@ import java.util.Collection;
 public interface QueueBehave<T> {
 
     int getThreadsCount();
+    int getFetchLimit();
     void put(MessageContainer<T> event);
     Collection<MessageContainer<T>> find(QueueConsumer<T> consumer);
     void remove(MessageContainer<T> packet);
