@@ -16,6 +16,7 @@ import java.util.logging.Logger;
 
 /**
  * 14.10.2016
+ *
  * @author kostapc
  * 2016 Infon
  */
@@ -36,32 +37,31 @@ public class MongoConnection {
     static {
         optionsBuilderMap = new HashMap<>();
         for (Method method : MongoClientOptions.Builder.class.getMethods()) {
-            if (method.getParameterTypes().length!=1){
+            if (method.getParameterTypes().length != 1) {
                 continue;
             }
             int access = method.getModifiers();
-            if(!Modifier.isPublic(access) || Modifier.isStatic(access)) {
+            if (!Modifier.isPublic(access) || Modifier.isStatic(access)) {
                 continue;
             }
 
             String optionName = method.getName();
             Class<?> paramType = method.getParameterTypes()[0];
-            if(
+            if (
                     !paramType.equals(Boolean.class) &&
-                            !paramType.equals(Boolean.TYPE)  &&
+                            !paramType.equals(Boolean.TYPE) &&
                             !paramType.equals(Integer.class) &&
-                            !paramType.equals(Integer.TYPE)  &&
+                            !paramType.equals(Integer.TYPE) &&
                             !paramType.equals(String.class)
-                    ) {
+            ) {
                 continue;
             }
             String prefix =
                     (
                             paramType.equals(Boolean.class) ||
                                     paramType.equals(Boolean.TYPE)
-                    )? "is":"get"
-            ;
-            String getterName = prefix+optionName.substring(0,1).toUpperCase()+optionName.substring(1);
+                    ) ? "is" : "get";
+            String getterName = prefix + optionName.substring(0, 1).toUpperCase() + optionName.substring(1);
 
             Object defaultValue;
             try {
@@ -76,11 +76,11 @@ public class MongoConnection {
                 continue;
             }
 
-            optionsBuilderMap.put(optionName,method);
+            optionsBuilderMap.put(optionName, method);
 
             String infoMessage = String.format(
                     "MongoOptions param \"%s\" = \"%s\" (default, getter: %s)",
-                    optionName,  defaultValue, getterName
+                    optionName, defaultValue, getterName
             );
 
             LOGGER.info(infoMessage);
@@ -112,13 +112,13 @@ public class MongoConnection {
                 mongoDBUser = value;
             } else if (key.startsWith(MONGO_DB_PASSWORD)) {
                 mongoDBPassword = value.toCharArray();
-            } else if(key.startsWith(MONGO_QUEUE_COLLECTION_NAME)) {
+            } else if (key.startsWith(MONGO_QUEUE_COLLECTION_NAME)) {
                 mongoCollectionName = value;
             } else {
                 try {
                     LOGGER.fine(MessageFormat.format("Set \"{0}\" value {1}", key, value));
                     Method method = optionsBuilderMap.get(key);
-                    if(method==null) {
+                    if (method == null) {
                         LOGGER.warning(String.format(
                                 "MongoClientOptions parameter %s => %s not found in configuration class; skipping...",
                                 key, value
@@ -137,26 +137,30 @@ public class MongoConnection {
             }
         }
 
-        if (mongoDBName == null || mongoDBUser == null) {
+        if (mongoDBName == null) {
             throw new RuntimeException("Mandatory property \"database\" not found");
         }
 
-        MongoCredential credential = MongoCredential.createCredential(
-                        mongoDBUser, mongoDBName, mongoDBPassword
-        );
-
+        if (mongoDBUser == null || mongoDBPassword == null) {
+            MongoCredential credential = MongoCredential.createPlainCredential(
+                    "", mongoDBName, "".toCharArray()
+            );
+            client = new MongoClient(propertiesAdresses);
+        } else {
+            MongoCredential credential = MongoCredential.createCredential(
+                    mongoDBUser, mongoDBName, mongoDBPassword
+            );
+            client = new MongoClient(
+                    propertiesAdresses,
+                    credential, optionsBuilder.build()
+            );
+        }
 
         WriteConcern writeConcern = WriteConcern.W1;
         writeConcern.withJournal(true);
         writeConcern.withWTimeout(0, TimeUnit.MILLISECONDS);
         optionsBuilder.writeConcern(writeConcern);
-        MongoClientOptions options = optionsBuilder.build();
 
-
-        client = new MongoClient(
-                propertiesAdresses,
-                credential, options
-        );
         mongoDB = client.getDatabase(mongoDBName);
     }
 

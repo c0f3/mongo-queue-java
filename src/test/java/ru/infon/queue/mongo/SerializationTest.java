@@ -3,6 +3,7 @@ package ru.infon.queue.mongo;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.bson.Document;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import ru.infon.queuebox.mongo.MongoJacksonSerializer;
 
@@ -12,6 +13,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * 27.03.2017
+ *
  * @author KostaPC
  * Copyright (c) 2017 Infon. All rights reserved.
  */
@@ -19,15 +21,15 @@ public class SerializationTest {
 
     @Test
     public void testDefaultSerializer() {
-        JustPojo pojo = new JustPojo(13,"_1_3_!");
-        MongoJacksonSerializer<JustPojo> serialiser = new MongoJacksonSerializer<>(JustPojo.class);
-        Document bsonDocument = serialiser.serialize(pojo);
+        JustPojo pojo = new JustPojo(13, "_1_3_!");
+        MongoJacksonSerializer<JustPojo> serializer = new MongoJacksonSerializer<>(JustPojo.class);
+        Document bsonDocument = serializer.serialize(pojo);
 
         System.out.println(bsonDocument);
 
-        JustPojo processedPojo = serialiser.deserialize(bsonDocument);
+        JustPojo processedPojo = serializer.deserialize(bsonDocument);
 
-        System.out.println("processed \n:"+processedPojo);
+        System.out.println("processed \n:" + processedPojo);
 
         assertEquals(pojo, processedPojo);
     }
@@ -84,31 +86,32 @@ public class SerializationTest {
         int iterations = 100000;
         long warmupTime = 20000;
 
-        if(warmupTime>0) {
+        if (warmupTime > 0) {
             System.out.println("with warmup");
         } else {
             System.out.println("without warmup");
         }
 
-        while (warmupTime>0) {
+        while (warmupTime > 0) {
             long time = System.currentTimeMillis();
             testConvert(iterations);
             testReparse(iterations);
-            time = System.currentTimeMillis()-time;
+            time = System.currentTimeMillis() - time;
             warmupTime -= time;
         }
 
         {
             double result = testConvert(iterations);
             System.out.println("avg nano time convert " + result + "( " + Math.round(result / 1000) + " )");
+            Assertions.assertTrue(result < 1400);
         }
 
         {
             double result = testReparse(iterations);
             System.out.println("avg nano time reparse " + result + "( " + Math.round(result / 1000) + " )");
+            Assertions.assertTrue(result < 80000);
         }
     }
-
 
 
     static class IncrementalAverage {
@@ -122,7 +125,7 @@ public class SerializationTest {
         }
 
         private double getAvg(double prev_avg, double x, int n) {
-            return (prev_avg*n + x)/(n+1);
+            return (prev_avg * n + x) / (n + 1);
         }
 
         double getResult() {
