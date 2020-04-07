@@ -1,7 +1,7 @@
 ## version 0.1.1
 
 * anonymous connection
-
+* listener calls bind to fetch limit
 
 ## version 0.1.0
 
