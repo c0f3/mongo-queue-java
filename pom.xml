@@ -15,8 +15,8 @@
     <url>https://github.com/c0f3/queue-box</url>
 
     <scm>
-        <connection>https://github.com/c0f3/queue-box.git</connection>
-        <developerConnection>https://github.com/c0f3/queue-box.git</developerConnection>
+        <connection>scm:git:https://github.com/c0f3/queue-box.git</connection>
+        <developerConnection>scm:git:https://github.com/c0f3/queue-box.git</developerConnection>
         <url>https://github.com/c0f3/queue-box</url>
         <tag>queue-box-0.1.0</tag>
     </scm>
