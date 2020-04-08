@@ -104,7 +104,7 @@ to your project's `pom.xml` file such as:
 <dependency>
 	<groupId>net.c0f3.labs</groupId>
 	<artifactId>queue-box</artifactId>
-	<version>0.1.0</version>
+	<version>0.1.1</version>
 </dependency>
 
 ```
