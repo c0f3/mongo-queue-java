@@ -17,7 +17,7 @@
         <connection>scm:git:https://github.com/c0f3/queue-box.git</connection>
         <developerConnection>scm:git:https://github.com/c0f3/queue-box.git</developerConnection>
         <url>https://github.com/c0f3/queue-box</url>
-        <tag>queue-box-0.1.0</tag>
+        <tag>queue-box-0.1.2</tag>
     </scm>
 
     <developers>
@@ -33,7 +33,7 @@
 
     <groupId>net.c0f3.labs</groupId>
     <artifactId>queue-box</artifactId>
-    <version>0.1.2-SNAPSHOT</version>
+    <version>0.1.2</version>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
