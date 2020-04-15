@@ -11,6 +11,7 @@ import java.lang.reflect.Modifier;
 import java.text.MessageFormat;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -87,25 +88,24 @@ public class MongoConnection {
         }
     }
 
-    private final MongoDatabase mongoDB;
-    private final MongoClient client;
+    private final AtomicReference<MongoClient> client = new AtomicReference<>();
+    private final MongoClientOptions.Builder optionsBuilder;
 
     private String mongoDBName;
     private String mongoDBUser;
     private String mongoCollectionName;
     private char[] mongoDBPassword;
+    private final List<ServerAddress> propertiesAddresses = new ArrayList<>();
 
     public MongoConnection(Properties properties) {
 
-        MongoClientOptions.Builder optionsBuilder = MongoClientOptions.builder();
-
-        List<ServerAddress> propertiesAdresses = new ArrayList<>();
+        optionsBuilder = MongoClientOptions.builder();
 
         for (Map.Entry<Object, Object> entry : properties.entrySet()) {
             String key = entry.getKey().toString();
             String value = entry.getValue().toString();
             if (key.startsWith(MONGO_DB_URL)) {
-                propertiesAdresses.add(new ServerAddress(value));
+                propertiesAddresses.add(new ServerAddress(value));
             } else if (key.equals(MONGO_DB_DB)) {
                 mongoDBName = value;
             } else if (key.equals(MONGO_DB_USER)) {
@@ -141,37 +141,52 @@ public class MongoConnection {
             throw new RuntimeException("Mandatory property \"database\" not found");
         }
 
-        if (mongoDBUser == null || mongoDBPassword == null) {
-            MongoCredential credential = MongoCredential.createPlainCredential(
-                    "", mongoDBName, "".toCharArray()
-            );
-            client = new MongoClient(propertiesAdresses);
-        } else {
-            MongoCredential credential = MongoCredential.createCredential(
-                    mongoDBUser, mongoDBName, mongoDBPassword
-            );
-            client = new MongoClient(
-                    propertiesAdresses,
-                    credential, optionsBuilder.build()
-            );
-        }
-
         WriteConcern writeConcern = WriteConcern.W1;
         writeConcern.withJournal(true);
         writeConcern.withWTimeout(0, TimeUnit.MILLISECONDS);
         optionsBuilder.writeConcern(writeConcern);
+    }
 
-        mongoDB = client.getDatabase(mongoDBName);
+    private MongoClient initMongoClient() {
+        if (mongoDBUser == null || mongoDBPassword == null) {
+            return new MongoClient(propertiesAddresses, optionsBuilder.build());
+        } else {
+            MongoCredential credential = MongoCredential.createCredential(
+                    mongoDBUser, mongoDBName, mongoDBPassword
+            );
+            return new MongoClient(
+                    propertiesAddresses,
+                    credential, optionsBuilder.build()
+            );
+        }
+    }
+
+    private final Object syncFlag = new Object();
+
+    private MongoClient lazyInitMongoClient() {
+        MongoClient result = client.get();
+        if (result == null) {
+            synchronized (syncFlag) {
+                result = client.get();
+                if (result != null) {
+                    return result;
+                }
+                result = initMongoClient();
+                boolean successfulSet = client.compareAndSet(null, result);
+                assert successfulSet : "lazy MongoClient initialization failed";
+            }
+        }
+        return result;
     }
 
     /*===========================================[ CLASS METHODS ]==============*/
 
     public MongoClient getMongoClient() {
-        return client;
+        return lazyInitMongoClient();
     }
 
     public String getDatabaseName() {
-        return mongoDB.getName();
+        return mongoDBName;
     }
 
     public String getMongoCollectionName() {
@@ -179,15 +194,11 @@ public class MongoConnection {
     }
 
     public MongoDatabase getDatabase() {
-        return mongoDB;
+        return getMongoClient().getDatabase(getDatabaseName());
     }
 
     public <D> MongoCollection<D> getMongoCollection(Class<D> documentCLass) {
         return getDatabase().getCollection(getMongoCollectionName(), documentCLass);
-    }
-
-    public int getThreadsCount() {
-        return client.getMongoClientOptions().getConnectionsPerHost();
     }
 
 }

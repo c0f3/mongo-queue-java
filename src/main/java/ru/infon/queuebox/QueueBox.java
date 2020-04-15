@@ -1,5 +1,7 @@
 package ru.infon.queuebox;
 
+import ru.infon.queuebox.common.PropertiesBox;
+
 import java.util.Objects;
 import java.util.Properties;
 import java.util.concurrent.ExecutorService;
@@ -16,7 +18,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public class QueueBox<T> {
 
-    public static final int PRIORITY_HIGHT = 1;
+    public static final int PRIORITY_HIGH = 1;
     public static final int PRIORITY_NORMAL = 4; // default priority value from documentation
     public static final int PRIORITY_LOW = 10;
     public static final int PRIORITY_DEFAULT = PRIORITY_NORMAL;
@@ -27,17 +29,16 @@ public class QueueBox<T> {
     protected QueueBehave<T> behave = null;
     protected ExecutorService executor = null;
 
-    protected final Properties properties;
-    protected final Class<T> packetClass;
+    private final PropertiesBox properties;
+    private final Class<T> packetClass;
 
     final AtomicBoolean started = new AtomicBoolean(false);
 
-    public QueueBox(Properties properties, Class<T> packetCLass) {
+    public QueueBox(PropertiesBox properties, Class<T> packetCLass) {
         this.properties = properties;
         this.packetClass = packetCLass;
     }
 
-    // TODO: chain of setters to provide behave, executor and other...
     public QueueBox<T> withExecutorService(ExecutorService executor) {
         this.executor = executor;
         return this;
@@ -46,6 +47,10 @@ public class QueueBox<T> {
     public QueueBox<T> withQueueBehave(QueueBehave<T> queueBehave) {
         this.behave = queueBehave;
         return this;
+    }
+
+    public PropertiesBox getProperties() {
+        return properties;
     }
 
     public void start() {
