@@ -10,3 +10,8 @@
 ## code quality
 
 * test for "mongo+srv" connection URI
+
+## CI/CD
+
+* run test on PR
+* release on merge to master
