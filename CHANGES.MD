@@ -1,3 +1,7 @@
+## version 0.1.2
+
+* use existing mongodb connection (for spring)
+
 ## version 0.1.1
 
 * anonymous connection
