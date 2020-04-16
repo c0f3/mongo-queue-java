@@ -39,6 +39,7 @@ public class MongoRoutedQueueBox<T extends RoutedMessage> extends QueueBox<T> {
     public MongoRoutedQueueBox(MongoDatabase mongoDatabase, Properties properties, Class<T> packetCLass) {
         super(new PropertiesBox(properties), packetCLass);
         this.packetClass = packetCLass;
+        properties.put(MongoConnection.MONGO_DB_DB, "ignored-value");
         MongoConnection connection = new MongoConnection(properties);
         // un till getClient() or getDatabase() called - connection not attempted to create.
         this.collection = mongoDatabase.getCollection(connection.getMongoCollectionName());

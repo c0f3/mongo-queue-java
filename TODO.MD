@@ -5,6 +5,7 @@
 * split service code and providers with SPI
 * create a provider for transactional databases
   * postgres
+  * use single table for different payloads
 * spring boot module
   
 ## code quality

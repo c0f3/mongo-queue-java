@@ -172,8 +172,9 @@ public class MongoConnection {
                     return result;
                 }
                 result = initMongoClient();
-                boolean successfulSet = client.compareAndSet(null, result);
-                assert successfulSet : "lazy MongoClient initialization failed";
+                if (!client.compareAndSet(null, result)) {
+                    throw new IllegalStateException("lazy MongoClient initialization failed");
+                }
             }
         }
         return result;
