@@ -8,6 +8,7 @@ import ru.infon.queuebox.RoutedMessage;
 import ru.infon.queuebox.common.PropertiesBox;
 
 import java.util.Properties;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 /**
@@ -21,6 +22,7 @@ public class MongoRoutedQueueBox<T extends RoutedMessage> extends QueueBox<T> {
     public static final String PROPERTY_THREADS_COUNT = "queue.threads.count";
     private static final int DEFAULT_THREADS_COUNT = 10;
 
+    private ExecutorService localExecutor;
     private final MongoCollection<Document> collection;
     private final int threadsCount;
     private final Class<T> packetClass;
@@ -44,8 +46,8 @@ public class MongoRoutedQueueBox<T extends RoutedMessage> extends QueueBox<T> {
         // un till getClient() or getDatabase() called - connection not attempted to create.
         this.collection = mongoDatabase.getCollection(connection.getMongoCollectionName());
         this.threadsCount = getProperties().tryGetIntProperty(
-            PROPERTY_THREADS_COUNT,
-            DEFAULT_THREADS_COUNT
+                PROPERTY_THREADS_COUNT,
+                DEFAULT_THREADS_COUNT
         );
     }
 
@@ -56,8 +58,17 @@ public class MongoRoutedQueueBox<T extends RoutedMessage> extends QueueBox<T> {
         }
         if (this.executor == null) {
             // additional thread for timer and common tasks
-            this.executor = Executors.newFixedThreadPool(threadsCount + 1);
+            localExecutor = Executors.newFixedThreadPool(threadsCount + 1);
+            this.withExecutorService(localExecutor);
         }
         super.start();
+    }
+
+    @Override
+    public void stop() {
+        super.stop();
+        if (localExecutor != null) {
+            localExecutor.shutdown();
+        }
     }
 }

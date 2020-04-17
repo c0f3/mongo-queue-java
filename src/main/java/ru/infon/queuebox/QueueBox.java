@@ -3,7 +3,6 @@ package ru.infon.queuebox;
 import ru.infon.queuebox.common.PropertiesBox;
 
 import java.util.Objects;
-import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -58,6 +57,10 @@ public class QueueBox<T> {
         Objects.requireNonNull(executor);
         this.queue = new QueueEngine<>(properties, behave, executor);
         started.set(true);
+    }
+
+    public void stop() {
+        queue.shutdown();
     }
 
     public void subscribe(QueueConsumer<T> consumer) {

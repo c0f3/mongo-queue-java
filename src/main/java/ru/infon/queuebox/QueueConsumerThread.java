@@ -5,6 +5,7 @@ import org.apache.commons.logging.LogFactory;
 
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
@@ -28,6 +29,7 @@ class QueueConsumerThread<T> {
     private final QueuePacketHolder<T> packetHolder;
     private final Semaphore semaphore;
     private final Timer timer;
+    private final AtomicBoolean runningFlag = new AtomicBoolean(false);
     private int fetchDelayMills = DEFAULT_FETCH_DELAY_MILLS;
 
     QueueConsumerThread(
@@ -54,7 +56,12 @@ class QueueConsumerThread<T> {
                 "starting QueueConsumerThread for %s",
                 consumer
         ));
+        runningFlag.set(true);
         executor.execute(() -> runTask(this::payload));
+    }
+
+    void stop() {
+        runningFlag.set(false);
     }
 
     private Collection<MessageContainer<T>> payload() {
@@ -124,7 +131,9 @@ class QueueConsumerThread<T> {
     }
 
     private void runTask(Supplier<Collection<MessageContainer<T>>> payload) {
-        CompletableFuture.supplyAsync(payload, executor).thenAccept(this::onComplete);
+        if(runningFlag.get()) {
+            CompletableFuture.supplyAsync(payload, executor).thenAccept(this::onComplete);
+        }
     }
 
     private void schedule(Runnable runnable, long delay) {
