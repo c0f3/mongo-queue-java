@@ -3,28 +3,31 @@ package gaillard.mongo;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.*;
 
+import java.time.Instant;
 import java.util.*;
 import java.util.Map.Entry;
-import java.util.function.Consumer;
 
+import net.c0f3.queuebox.mongo.MongoQueueCoreIndexes;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 
 public final class MongoQueueCore {
 
+    private final MongoQueueCoreIndexes indexes;
     private final MongoCollection<Document> collection;
 
     public MongoQueueCore(final MongoCollection<Document> collection) {
         Objects.requireNonNull(collection);
 
         this.collection = collection;
+        this.indexes = new MongoQueueCoreIndexes<Document>(collection);
     }
 
     /**
      * Ensure index for get() method with no fields before or after sort fields
      */
     public void ensureGetIndex() {
-        ensureGetIndex(new Document());
+        indexes.ensureGetIndex(new Document());
     }
 
     /**
@@ -33,7 +36,7 @@ public final class MongoQueueCore {
      * @param beforeSort fields in get() call that should be before the sort fields in the index. Should not be null
      */
     public void ensureGetIndex(final Document beforeSort) {
-        ensureGetIndex(beforeSort, new Document());
+        indexes.ensureGetIndex(beforeSort);
     }
 
     /**
@@ -43,34 +46,7 @@ public final class MongoQueueCore {
      * @param afterSort  fields in get() call that should be after the sort fields in the index. Should not be null
      */
     public void ensureGetIndex(final Document beforeSort, final Document afterSort) {
-        Objects.requireNonNull(beforeSort);
-        Objects.requireNonNull(afterSort);
-
-        //using general rule: equality, sort, range or more equality tests in that order for index
-        final Document completeIndex = new Document("running", 1);
-
-        for (final Entry<String, Object> field : beforeSort.entrySet()) {
-            if (!Objects.equals(field.getValue(), 1) && !Objects.equals(field.getValue(), -1)) {
-                throw new IllegalArgumentException("field values must be either 1 or -1");
-            }
-
-            completeIndex.append("payload." + field.getKey(), field.getValue());
-        }
-
-        completeIndex.append("priority", 1).append("created", 1);
-
-        for (final Entry<String, Object> field : afterSort.entrySet()) {
-            if (!Objects.equals(field.getValue(), 1) && !Objects.equals(field.getValue(), -1)) {
-                throw new IllegalArgumentException("field values must be either 1 or -1");
-            }
-
-            completeIndex.append("payload." + field.getKey(), field.getValue());
-        }
-
-        completeIndex.append("earliestGet", 1);
-
-        ensureIndex(completeIndex);//main query in Get()
-        ensureIndex(new Document("running", 1).append("resetTimestamp", 1));//for the stuck messages query in Get()
+        indexes.ensureGetIndex(beforeSort, afterSort);
     }
 
     /**
@@ -80,23 +56,7 @@ public final class MongoQueueCore {
      * @param includeRunning whether running was given to count() or not
      */
     public void ensureCountIndex(final Document index, final boolean includeRunning) {
-        Objects.requireNonNull(index);
-
-        final Document completeIndex = new Document();
-
-        if (includeRunning) {
-            completeIndex.append("running", 1);
-        }
-
-        for (final Entry<String, Object> field : index.entrySet()) {
-            if (!Objects.equals(field.getValue(), 1) && !Objects.equals(field.getValue(), -1)) {
-                throw new IllegalArgumentException("field values must be either 1 or -1");
-            }
-
-            completeIndex.append("payload." + field.getKey(), field.getValue());
-        }
-
-        ensureIndex(completeIndex);
+        indexes.ensureCountIndex(index, includeRunning);
     }
 
     /**
@@ -149,20 +109,15 @@ public final class MongoQueueCore {
 
         builtQuery.append("earliestGet", new Document("$lte", new Date()));
 
-        final Calendar calendar = Calendar.getInstance();
-
-        calendar.add(Calendar.SECOND, resetDuration);
-        final Date resetTimestamp = calendar.getTime();
+        final Date resetTimestamp = Date.from(Instant.now().plusSeconds(resetDuration));
 
         final Document sort = new Document("priority", 1).append("created", 1);
         final Document update = new Document("$set", new Document("running", true).append("resetTimestamp", resetTimestamp));
         final Document fields = new Document("payload", 1);
 
-        calendar.setTimeInMillis(System.currentTimeMillis());
-        calendar.add(Calendar.MILLISECOND, waitDuration);
-        final Date end = calendar.getTime();
-
-        while (true) {
+        long nowTimestamp = System.currentTimeMillis();
+        long endTimestamp = nowTimestamp + Math.max(waitDuration, 0);
+        while (nowTimestamp <= endTimestamp) {
             // final Document message = (Document) collection.findAndModify(builtQuery, fields, sort, false, update, true, false);
             FindOneAndUpdateOptions opts = new FindOneAndUpdateOptions().sort(sort).upsert(false).returnDocument(ReturnDocument.AFTER).projection(fields);
             final Document message = collection.findOneAndUpdate(builtQuery, update, opts);
@@ -170,21 +125,22 @@ public final class MongoQueueCore {
                 final ObjectId id = message.getObjectId("_id");
                 return ((Document) message.get("payload")).append("id", id);
             }
+            trySleep(pollDuration);
+            nowTimestamp = System.currentTimeMillis();
+        }
 
-            if (new Date().compareTo(end) >= 0) {
-                return null;
-            }
+        return null;
+    }
 
-            try {
-                if (pollDuration==0) {
-                    continue;
-                }
-                Thread.sleep(pollDuration);
-            } catch (final InterruptedException ex) {
-                throw new RuntimeException(ex);
-            } catch (final IllegalArgumentException ex) {
-                pollDuration = 0;
-            }
+    private void trySleep(long pollDuration) {
+        if(pollDuration<=0) {
+            return;
+        }
+        try {
+            Thread.sleep(pollDuration);
+        } catch (final InterruptedException ex) {
+            throw new RuntimeException(ex);
+        } catch (final IllegalArgumentException ignored) {
         }
     }
 
@@ -382,18 +338,4 @@ public final class MongoQueueCore {
         collection.insertOne(message);
     }
 
-    private void ensureIndex(final Document indexDoc) {
-        for (int i = 0; i < 5; ++i) {
-            for (final Document existingIndex : collection.listIndexes()) {
-                if (existingIndex.get("key").equals(indexDoc)) {
-                    return;
-                }
-            }
-            String name = UUID.randomUUID().toString();
-            IndexOptions iOpts = new IndexOptions().background(true).name(name);
-            collection.createIndex(indexDoc, iOpts);
-        }
-
-        throw new RuntimeException("could not create index after 5 attempts");
-    }
 }

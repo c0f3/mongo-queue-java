@@ -2,6 +2,8 @@ package ru.infon.queuebox.mongo;
 
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
+import net.c0f3.queuebox.QueueStatistic;
+import net.c0f3.queuebox.mongo.MongoRoutedQueueStatistic;
 import org.bson.Document;
 import ru.infon.queuebox.QueueBox;
 import ru.infon.queuebox.RoutedMessage;
@@ -53,6 +55,7 @@ public class MongoRoutedQueueBox<T extends RoutedMessage> extends QueueBox<T> {
 
     @Override
     public void start() {
+        this.withStatistic(new MongoRoutedQueueStatistic());
         if (behave == null) {
             this.withQueueBehave(new MongoRoutedQueueBehave<>(collection, getProperties(), packetClass));
         }

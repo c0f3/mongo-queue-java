@@ -30,7 +30,7 @@ public class MongoConnection {
     public static final String MONGO_QUEUE_COLLECTION_NAME = "mongodb.queue.collection";
 
 
-    private static final Logger LOGGER = Logger.getLogger("javax.cache");
+    private static final Logger LOGGER = Logger.getLogger(MongoConnection.class.getCanonicalName());
 
     private static final MongoClientOptions defaultOptions = MongoClientOptions.builder().build();
     private static final Map<String, Method> optionsBuilderMap;

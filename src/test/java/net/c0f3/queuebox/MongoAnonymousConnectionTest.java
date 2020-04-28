@@ -1,6 +1,5 @@
 package net.c0f3.queuebox;
 
-import com.mongodb.MongoClient;
 import com.mongodb.MongoTimeoutException;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
@@ -41,11 +40,11 @@ public class MongoAnonymousConnectionTest {
             newDoc.put("key", "value");
             collection.insertOne(newDoc);
             List<Document> docs = new ArrayList<>();
-            for(Document doc: collection.find()){
+            for (Document doc : collection.find()) {
                 docs.add(doc);
             }
-            Assertions.assertEquals(1,docs.size());
-            Assertions.assertEquals("value",docs.get(0).get("key"));
+            Assertions.assertEquals(1, docs.size());
+            Assertions.assertEquals("value", docs.get(0).get("key"));
 
         } catch (MongoTimeoutException e) {
             System.out.println("MongoTimeoutException caught");

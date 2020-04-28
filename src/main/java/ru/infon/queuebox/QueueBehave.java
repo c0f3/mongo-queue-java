@@ -1,5 +1,7 @@
 package ru.infon.queuebox;
 
+import net.c0f3.queuebox.QueueBoxContext;
+
 import java.util.Collection;
 
 /**
@@ -16,5 +18,6 @@ public interface QueueBehave<T> {
     Collection<MessageContainer<T>> find(QueueConsumer<T> consumer);
     void remove(MessageContainer<T> packet);
     void reset(MessageContainer<T> packet);
+    void setContext(QueueBoxContext context);
 
 }

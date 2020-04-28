@@ -2,6 +2,7 @@ package ru.infon.queuebox.mongo;
 
 import com.mongodb.client.MongoCollection;
 import gaillard.mongo.MongoQueueCore;
+import net.c0f3.queuebox.QueueBoxContext;
 import org.bson.Document;
 import ru.infon.queuebox.*;
 import ru.infon.queuebox.common.PropertiesBox;
@@ -26,15 +27,22 @@ public class MongoRoutedQueueBehave<T extends RoutedMessage> implements QueueBeh
     private static final int DEFAULT_FETCH_LIMIT = 100;
     private static final int DEFAULT_RESET_TIMEOUT_SEC = 5 * 60;
     private static final int RETRY_IMMEDIATELY = 0;
-    private static final int WAIT_FOR_RETRY_DEFAULT_MILLS = 100;
+    private static final int NO_WAIT_FOR_RETRY = 0;
+
+    public static final String STAT_FIND_COUNTER = "finds-counter";
 
     private final QueueSerializer<T> serializer;
     private final MongoQueueCore mongoQueueCore;
+    private QueueBoxContext context;
 
     private int fetchLimit = DEFAULT_FETCH_LIMIT;
     private int resetTimeout = DEFAULT_RESET_TIMEOUT_SEC;
 
-    public MongoRoutedQueueBehave(MongoCollection<Document> collection, PropertiesBox properties, Class<T> packetClass) {
+    public MongoRoutedQueueBehave(
+            MongoCollection<Document> collection,
+            PropertiesBox properties,
+            Class<T> packetClass
+    ) {
         this.serializer = new MongoJacksonSerializer<>(packetClass);
         this.mongoQueueCore = new MongoQueueCore(collection);
         Document indexDocument = new Document();
@@ -42,6 +50,11 @@ public class MongoRoutedQueueBehave<T extends RoutedMessage> implements QueueBeh
         mongoQueueCore.ensureGetIndex(indexDocument);
         this.fetchLimit = properties.tryGetIntProperty(PROPERTY_FETCH_LIMIT, DEFAULT_FETCH_LIMIT);
         this.resetTimeout = properties.tryGetIntProperty(PROPERTY_RESET_TIMEOUT, DEFAULT_RESET_TIMEOUT_SEC);
+    }
+
+    @Override
+    public void setContext(QueueBoxContext context) {
+        this.context = context;
     }
 
     @Override
@@ -71,8 +84,9 @@ public class MongoRoutedQueueBehave<T extends RoutedMessage> implements QueueBeh
         while (limit-- > 0) {
             Document queueMessage = mongoQueueCore.get(
                     query,
-                    resetTimeout, WAIT_FOR_RETRY_DEFAULT_MILLS, RETRY_IMMEDIATELY
+                    resetTimeout, NO_WAIT_FOR_RETRY, RETRY_IMMEDIATELY
             );
+            context.getStatistic().increment(STAT_FIND_COUNTER);
             if (queueMessage == null) {
                 break;
             }
