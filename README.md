@@ -13,7 +13,7 @@ Unit tests based on real MongoDB with testcontainers.
 
 ## Features
 
- * totally async and non-blocking multithreading
+ * totally async and non-blocking multithreading (maybe used in clustered software)
  * Message selection and/or count via MongoDB query
  * Distributes across machines via MongoDB
  * Message priority
@@ -23,7 +23,27 @@ Unit tests based on real MongoDB with testcontainers.
  * Atomic acknowledge and send together
  * Easy index creation based only on payload
  * work with the latest MongoDB (4.2)
- * you can use any other storage sytem by implementing interface
+ * you can use any other storage system by implementing interface
+ 
+## Jar
+
+To add the library as a jar simply [Build](#project-build) the project and use the `queue-box-0.0.1.jar` from the created
+`target` directory!
+
+## Maven
+
+To add the library as a local, per-project dependency use [Maven](http://maven.apache.org)! Simply add a dependency on
+to your project's `pom.xml` file such as:
+
+```xml
+
+<dependency>
+	<groupId>net.c0f3.labs</groupId>
+	<artifactId>queue-box</artifactId>
+	<version>0.1.4</version>
+</dependency>
+
+```
 
 ## Usage example
 
@@ -89,26 +109,6 @@ public final class Main {
 }
 ```
 
-## Jar
-
-To add the library as a jar simply [Build](#project-build) the project and use the `queue-box-0.0.1.jar` from the created
-`target` directory!
-
-## Maven
-
-To add the library as a local, per-project dependency use [Maven](http://maven.apache.org)! Simply add a dependency on
-to your project's `pom.xml` file such as:
-
-```xml
-
-<dependency>
-	<groupId>net.c0f3.labs</groupId>
-	<artifactId>queue-box</artifactId>
-	<version>0.1.1</version>
-</dependency>
-
-```
-
 ## Documentation
 
 Found in the [source](/src/main/java/gaillard/mongo/MongoQueueCore.java) itself, take a look!
@@ -123,4 +123,4 @@ mvn clean install
 
 ## We must know our heroes!
 
-This version is based on the original version authored by [Gaillard](https://github.com/gaillard) from [here](https://github.com/gaillard/mongo-queue-java) and impoved by [Uromahn](https://github.com/uromahn/mongo-queue-java)
+This version based on the original version authored by [Gaillard](https://github.com/gaillard) from [here](https://github.com/gaillard/mongo-queue-java) and impoved by [Uromahn](https://github.com/uromahn/mongo-queue-java)
