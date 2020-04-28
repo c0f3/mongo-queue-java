@@ -1,3 +1,8 @@
+## version 0.1.3
+
+* reduce mongo operations count on default settings
+* ability to stop queue
+
 ## version 0.1.2
 
 * use existing mongodb connection (for spring)
