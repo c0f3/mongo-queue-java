@@ -1,9 +1,12 @@
 package ru.infon.queuebox;
 
+import net.c0f3.queuebox.QueueBoxContext;
+import net.c0f3.queuebox.QueueStatistic;
 import ru.infon.queuebox.common.PropertiesBox;
 
+import java.util.Collection;
 import java.util.Objects;
-import java.util.Properties;
+import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -14,7 +17,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * Copyright (c) 2017 Infon. All rights reserved.
  *
  * Object must be singletone
- * TODO: select library name and add root interface for queue
  */
 public class QueueBox<T> {
 
@@ -26,6 +28,7 @@ public class QueueBox<T> {
     public static final String PROPERTY_FETCH_DELAY_MILLS = "queue.fetch.delay.mills";
 
     private QueueEngine<T> queue = null;
+    private final QueueBoxContext queueBoxContext;
     protected QueueBehave<T> behave = null;
     protected ExecutorService executor = null;
 
@@ -37,6 +40,8 @@ public class QueueBox<T> {
     public QueueBox(PropertiesBox properties, Class<T> packetCLass) {
         this.properties = properties;
         this.packetClass = packetCLass;
+        this.queueBoxContext = new QueueBoxContext();
+        this.queueBoxContext.setStatistic(QueueStatistic.voidInstance());
     }
 
     public QueueBox<T> withExecutorService(ExecutorService executor) {
@@ -46,7 +51,17 @@ public class QueueBox<T> {
 
     public QueueBox<T> withQueueBehave(QueueBehave<T> queueBehave) {
         this.behave = queueBehave;
+        this.behave.setContext(queueBoxContext);
         return this;
+    }
+
+    public QueueBox<T> withStatistic(QueueStatistic statistic) {
+        this.queueBoxContext.setStatistic(statistic);
+        return this;
+    }
+
+    public QueueStatistic getStatistic() {
+        return queueBoxContext.getStatistic();
     }
 
     public PropertiesBox getProperties() {
@@ -58,6 +73,10 @@ public class QueueBox<T> {
         Objects.requireNonNull(executor);
         this.queue = new QueueEngine<>(properties, behave, executor);
         started.set(true);
+    }
+
+    public void stop() {
+        queue.shutdown();
     }
 
     public void subscribe(QueueConsumer<T> consumer) {

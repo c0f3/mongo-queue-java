@@ -74,4 +74,8 @@ public class QueueEngine<T> implements QueuePacketHolder<T> {
         consumerThread.start();
     }
 
+    public void shutdown() {
+        listenerThreads.values().forEach(QueueConsumerThread::stop);
+    }
+
 }
