@@ -81,7 +81,7 @@ class QueueConsumerThread<T> {
                     result.size(), consumer.getConsumerId()
             ));
         }
-        if (result.size() == 0) {
+        if (result.size() == 0 && runningFlag.get()) {
             schedule(() -> runTask(this::payload), fetchDelayMills);
         } else {
 
@@ -158,7 +158,7 @@ class QueueConsumerThread<T> {
 
     private static class LambdaTimerTask extends TimerTask {
 
-        private Runnable runnable;
+        private final Runnable runnable;
 
         LambdaTimerTask(Runnable runnable) {
             this.runnable = runnable;
