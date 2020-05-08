@@ -23,7 +23,7 @@ class QueueConsumerThread<T> {
 
     private static final int DEFAULT_FETCH_DELAY_MILLS = 100;
 
-    private ExecutorService executor;
+    private final ExecutorService executor;
 
     private final QueueConsumer<T> consumer;
     private final QueuePacketHolder<T> packetHolder;
@@ -103,20 +103,22 @@ class QueueConsumerThread<T> {
                                 packetHolder::ack,
                                 packetHolder::reset
                         );
-                        consumer.onPacket(packet);
+                        if (!safePacketHandling(packet)) {
+                            packetHolder.reset(packet);
+                        }
                         semaphore.release();
                     });
                     it.remove();
                 } catch (RejectedExecutionException rejected) {
                     LOG.warn(String.format(
-                            "task {%s} was rejected by threadpool ... trying again later",
+                            "task {%s} was rejected by threadpool ... will try again later",
                             packet.getId()
                     ));
                     packetHolder.reset(packet);
                     it.remove();
                 } catch (InterruptedException interrupted) {
                     LOG.warn(String.format(
-                            "task {%s} cannot be executed due to threads policy ... trying again later",
+                            "task {%s} cannot be executed due to threads policy ... will try again later",
                             packet.getId()
                     ));
                     packetHolder.reset(packet);
@@ -130,8 +132,22 @@ class QueueConsumerThread<T> {
         }
     }
 
+    private boolean safePacketHandling(MessageContainer<T> packet) {
+        try {
+            consumer.onPacket(packet);
+            return true;
+        } catch (Throwable t) {
+            LOG.error(String.format(
+                    "task {%s} handling failed to to exception in consumer: %s... will try again later",
+                    packet.getId(),
+                    t.getMessage()
+            ), t);
+            return false;
+        }
+    }
+
     private void runTask(Supplier<Collection<MessageContainer<T>>> payload) {
-        if(runningFlag.get()) {
+        if (runningFlag.get()) {
             CompletableFuture.supplyAsync(payload, executor).thenAccept(this::onComplete);
         }
     }

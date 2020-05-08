@@ -10,6 +10,7 @@ import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
 
 /**
  * 23.03.2017
@@ -84,6 +85,20 @@ public class QueueBox<T> {
             throw new IllegalStateException("QueueBox not started");
         }
         executor.submit(()-> queue.registerConsumer(consumer));
+    }
+
+    public void subscribe(String destination, Consumer<T> consumer) {
+        subscribe(new QueueConsumer<T>() {
+            @Override
+            public void onPacket(MessageContainer<T> message) {
+                consumer.accept(message.getMessage());
+            }
+
+            @Override
+            public String getConsumerId() {
+                return destination;
+            }
+        });
     }
 
     public Future<T> queue(T message) {

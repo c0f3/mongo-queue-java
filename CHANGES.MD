@@ -1,3 +1,8 @@
+## version 0.1.4
+
+* do not stop executor on queue stop
+* fail tolerance on passing packet to consumer
+
 ## version 0.1.3
 
 * reduce mongo operations count on default settings

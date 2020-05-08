@@ -1,4 +1,4 @@
-package net.c0f3.queuebox;
+package net.c0f3.queuebox.mongo;
 
 import gaillard.mongo.MongoConnectionParams;
 import ru.infon.queuebox.mongo.MongoConnection;

@@ -1,4 +1,4 @@
-package net.c0f3.queuebox;
+package net.c0f3.queuebox.mongo;
 
 import org.testcontainers.containers.GenericContainer;
 

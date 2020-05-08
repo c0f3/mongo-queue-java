@@ -1,8 +1,8 @@
 package ru.infon.queue.mongo;
 
 import gaillard.mongo.MongoConnectionParams;
-import net.c0f3.queuebox.MongoContainer;
-import net.c0f3.queuebox.MongoTestHelper;
+import net.c0f3.queuebox.mongo.MongoContainer;
+import net.c0f3.queuebox.mongo.MongoTestHelper;
 import org.bson.Document;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

@@ -67,11 +67,4 @@ public class MongoRoutedQueueBox<T extends RoutedMessage> extends QueueBox<T> {
         super.start();
     }
 
-    @Override
-    public void stop() {
-        super.stop();
-        if (localExecutor != null) {
-            localExecutor.shutdown();
-        }
-    }
 }
