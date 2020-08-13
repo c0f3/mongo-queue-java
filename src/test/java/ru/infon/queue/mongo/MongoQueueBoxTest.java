@@ -1,8 +1,8 @@
 package ru.infon.queue.mongo;
 
 import gaillard.mongo.MongoConnectionParams;
-import net.c0f3.queuebox.MongoContainer;
-import net.c0f3.queuebox.MongoTestHelper;
+import net.c0f3.queuebox.mongo.MongoContainer;
+import net.c0f3.queuebox.mongo.MongoTestHelper;
 import org.bson.Document;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -41,8 +41,8 @@ public class MongoQueueBoxTest {
     @BeforeEach
     public void setup() {
         mongoParams = MongoTestHelper.createMongoParams(MONGO);
-        MongoConnection mongoConnection = new MongoConnection(mongoParams.getProperties());
-        mongoConnection.getMongoCollection(Document.class).deleteMany(new Document());
+        MongoConnection boxMongoConnection = new MongoConnection(mongoParams.getProperties());
+        boxMongoConnection.getMongoCollection(Document.class).deleteMany(new Document());
     }
 
     @Test
@@ -95,10 +95,10 @@ public class MongoQueueBoxTest {
         door.await(60000, TimeUnit.MILLISECONDS);
 
         assertEquals(0, door.getCount());
-        MongoConnection mongoConnection = new MongoConnection(mongoParams.getProperties());
+        MongoConnection boxMongoConnection = new MongoConnection(mongoParams.getProperties());
         assertEquals(
                 0,
-                mongoConnection.getMongoCollection(Document.class).countDocuments()
+                boxMongoConnection.getMongoCollection(Document.class).countDocuments()
         );
 
         System.out.println("ALL DONE!");

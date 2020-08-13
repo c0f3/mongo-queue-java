@@ -1,25 +1,26 @@
 package ru.infon.queuebox.mongo;
 
-import com.mongodb.*;
+import com.mongodb.ConnectionString;
+import com.mongodb.MongoClientSettings;
+import com.mongodb.MongoCredential;
+import com.mongodb.MongoDriverInformation;
+import com.mongodb.WriteConcern;
+import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
-import org.apache.commons.beanutils.ConvertUtils;
+import com.mongodb.client.internal.MongoClientImpl;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
-import java.text.MessageFormat;
-import java.util.*;
+import java.util.Map;
+import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * 14.10.2016
  *
  * @author kostapc
  * 2016 Infon
+ * 2020 c0f3
  */
 public class MongoConnection {
 
@@ -29,83 +30,27 @@ public class MongoConnection {
     public static final String MONGO_DB_PASSWORD = "default.mongodb.password";
     public static final String MONGO_QUEUE_COLLECTION_NAME = "mongodb.queue.collection";
 
-
-    private static final Logger LOGGER = Logger.getLogger(MongoConnection.class.getCanonicalName());
-
-    private static final MongoClientOptions defaultOptions = MongoClientOptions.builder().build();
-    private static final Map<String, Method> optionsBuilderMap;
-
-    static {
-        optionsBuilderMap = new HashMap<>();
-        for (Method method : MongoClientOptions.Builder.class.getMethods()) {
-            if (method.getParameterTypes().length != 1) {
-                continue;
-            }
-            int access = method.getModifiers();
-            if (!Modifier.isPublic(access) || Modifier.isStatic(access)) {
-                continue;
-            }
-
-            String optionName = method.getName();
-            Class<?> paramType = method.getParameterTypes()[0];
-            if (
-                    !paramType.equals(Boolean.class) &&
-                            !paramType.equals(Boolean.TYPE) &&
-                            !paramType.equals(Integer.class) &&
-                            !paramType.equals(Integer.TYPE) &&
-                            !paramType.equals(String.class)
-            ) {
-                continue;
-            }
-            String prefix =
-                    (
-                            paramType.equals(Boolean.class) ||
-                                    paramType.equals(Boolean.TYPE)
-                    ) ? "is" : "get";
-            String getterName = prefix + optionName.substring(0, 1).toUpperCase() + optionName.substring(1);
-
-            Object defaultValue;
-            try {
-                Method getter;
-                getter = MongoClientOptions.class.getDeclaredMethod(getterName);
-                defaultValue = getter.invoke(defaultOptions);
-            } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
-                LOGGER.warning(String.format(
-                        "reflection error while checking: %s; with getter: %s",
-                        optionName, getterName
-                ));
-                continue;
-            }
-
-            optionsBuilderMap.put(optionName, method);
-
-            String infoMessage = String.format(
-                    "MongoOptions param \"%s\" = \"%s\" (default, getter: %s)",
-                    optionName, defaultValue, getterName
-            );
-
-            LOGGER.info(infoMessage);
-        }
-    }
+    private static final int DEFAULT_CONNECTIONS_COUNT = 10;
 
     private final AtomicReference<MongoClient> client = new AtomicReference<>();
-    private final MongoClientOptions.Builder optionsBuilder;
+    private final MongoClientSettings.Builder optionsBuilder;
 
     private String mongoDBName;
     private String mongoDBUser;
     private String mongoCollectionName;
     private char[] mongoDBPassword;
-    private final List<ServerAddress> propertiesAddresses = new ArrayList<>();
+    private MongoClientSettings clientSettings;
 
     public MongoConnection(Properties properties) {
 
-        optionsBuilder = MongoClientOptions.builder();
+        optionsBuilder = MongoClientSettings.builder();
 
         for (Map.Entry<Object, Object> entry : properties.entrySet()) {
             String key = entry.getKey().toString();
             String value = entry.getValue().toString();
-            if (key.startsWith(MONGO_DB_URL)) {
-                propertiesAddresses.add(new ServerAddress(value));
+            if (key.equals(MONGO_DB_URL)) {
+                ConnectionString connectionString = new ConnectionString(value);
+                optionsBuilder.applyConnectionString(connectionString);
             } else if (key.equals(MONGO_DB_DB)) {
                 mongoDBName = value;
             } else if (key.equals(MONGO_DB_USER)) {
@@ -114,26 +59,6 @@ public class MongoConnection {
                 mongoDBPassword = value.toCharArray();
             } else if (key.startsWith(MONGO_QUEUE_COLLECTION_NAME)) {
                 mongoCollectionName = value;
-            } else {
-                try {
-                    LOGGER.fine(MessageFormat.format("Set \"{0}\" value {1}", key, value));
-                    Method method = optionsBuilderMap.get(key);
-                    if (method == null) {
-                        LOGGER.warning(String.format(
-                                "MongoClientOptions parameter %s => %s not found in configuration class; skipping...",
-                                key, value
-                        ));
-                        continue;
-                    }
-                    Object methodParam = ConvertUtils.convert(value, method.getParameterTypes()[0]);
-                    method.invoke(optionsBuilder, methodParam);
-                    LOGGER.info(String.format(
-                            "MongoClientOptions parameter set: %s => %s",
-                            key, value
-                    ));
-                } catch (Exception e) {
-                    LOGGER.log(Level.WARNING, e.getMessage(), e);
-                }
             }
         }
 
@@ -148,17 +73,17 @@ public class MongoConnection {
     }
 
     private MongoClient initMongoClient() {
-        if (mongoDBUser == null || mongoDBPassword == null) {
-            return new MongoClient(propertiesAddresses, optionsBuilder.build());
-        } else {
-            MongoCredential credential = MongoCredential.createCredential(
-                    mongoDBUser, mongoDBName, mongoDBPassword
-            );
-            return new MongoClient(
-                    propertiesAddresses,
-                    credential, optionsBuilder.build()
-            );
+        if (mongoDBUser != null && mongoDBPassword != null) {
+            optionsBuilder.credential(MongoCredential.createCredential(
+                mongoDBUser, mongoDBName, mongoDBPassword
+            ));
         }
+        MongoDriverInformation driverInfo = MongoDriverInformation.builder().build();
+        clientSettings = optionsBuilder.build();
+        return new MongoClientImpl(
+            clientSettings,
+            driverInfo
+        );
     }
 
     private final Object syncFlag = new Object();
@@ -182,7 +107,19 @@ public class MongoConnection {
 
     /*===========================================[ CLASS METHODS ]==============*/
 
-    public MongoClient getMongoClient() {
+    public void close() {
+        getMongoClient().close();
+    }
+
+    public int getConnectionPoolSize() {
+        if (clientSettings != null) {
+            return clientSettings.getConnectionPoolSettings().getMaxSize();
+        } else {
+            return DEFAULT_CONNECTIONS_COUNT;
+        }
+    }
+
+    private MongoClient getMongoClient() {
         return lazyInitMongoClient();
     }
 

@@ -10,12 +10,14 @@ import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
 
 /**
  * 23.03.2017
+ *
  * @author KostaPC
  * Copyright (c) 2017 Infon. All rights reserved.
- *
+ * <p>
  * Object must be singletone
  */
 public class QueueBox<T> {
@@ -71,7 +73,9 @@ public class QueueBox<T> {
     public void start() {
         Objects.requireNonNull(behave);
         Objects.requireNonNull(executor);
-        this.queue = new QueueEngine<>(properties, behave, executor);
+        if (this.queue == null) {
+            this.queue = new QueueEngine<>(properties, behave, executor);
+        }
         started.set(true);
     }
 
@@ -80,27 +84,41 @@ public class QueueBox<T> {
     }
 
     public void subscribe(QueueConsumer<T> consumer) {
-        if(!started.get()) {
+        if (!started.get()) {
             throw new IllegalStateException("QueueBox not started");
         }
-        executor.submit(()-> queue.registerConsumer(consumer));
+        executor.submit(() -> queue.registerConsumer(consumer));
+    }
+
+    public void subscribe(String destination, Consumer<T> consumer) {
+        subscribe(new QueueConsumer<T>() {
+            @Override
+            public void onPacket(MessageContainer<T> message) {
+                consumer.accept(message.getMessage());
+            }
+
+            @Override
+            public String getConsumerId() {
+                return destination;
+            }
+        });
     }
 
     public Future<T> queue(T message) {
-        if(!started.get()) {
+        if (!started.get()) {
             throw new IllegalStateException("QueueBox not started");
         }
-        return executor.submit(()->{
+        return executor.submit(() -> {
             queue.queue(new MessageContainer<>(message));
             return message;
         });
     }
 
     public Future<T> queue(T message, int priority) {
-        if(!started.get()) {
+        if (!started.get()) {
             throw new IllegalStateException("QueueBox not started");
         }
-        return executor.submit(()->{
+        return executor.submit(() -> {
             MessageContainer<T> messageContainer = new MessageContainer<>(message);
             messageContainer.setPriority(priority);
             queue.queue(messageContainer);

@@ -1,4 +1,4 @@
-package net.c0f3.queuebox;
+package net.c0f3.queuebox.mongo;
 
 import com.mongodb.client.MongoCollection;
 import gaillard.mongo.MongoConnectionParams;
@@ -38,9 +38,9 @@ public class MongoIndexUtilizationTest {
         MongoConnectionParams mongoParams = MongoTestHelper.createMongoParams(MONGO);
         Properties props = mongoParams.getProperties();
         props.put(QueueBox.PROPERTY_FETCH_DELAY_MILLS, fetchDelayMills);
-        MongoConnection mongoConnection = new MongoConnection(props);
-        mongoConnection.getMongoCollection(Document.class).deleteMany(new Document());
-        MongoCollection<Document> collection = mongoConnection.getDatabase()
+        MongoConnection boxMongoConnection = new MongoConnection(props);
+        boxMongoConnection.getMongoCollection(Document.class).deleteMany(new Document());
+        MongoCollection<Document> collection = boxMongoConnection.getDatabase()
                 .getCollection(MongoTestHelper.COLLECTION_NAME);
         collection.dropIndexes();
 

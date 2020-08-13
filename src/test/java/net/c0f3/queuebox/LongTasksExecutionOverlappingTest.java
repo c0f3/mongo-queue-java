@@ -1,6 +1,8 @@
 package net.c0f3.queuebox;
 
 import gaillard.mongo.MongoConnectionParams;
+import net.c0f3.queuebox.mongo.MongoContainer;
+import net.c0f3.queuebox.mongo.MongoTestHelper;
 import org.bson.Document;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -11,6 +13,7 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import ru.infon.queue.mongo.JustPojoRouted;
 import ru.infon.queuebox.MessageContainer;
+import ru.infon.queuebox.QueueBox;
 import ru.infon.queuebox.QueueConsumer;
 import ru.infon.queuebox.mongo.MongoConnection;
 import ru.infon.queuebox.mongo.MongoRoutedQueueBox;
@@ -38,8 +41,8 @@ public class LongTasksExecutionOverlappingTest {
         mongoParams = MongoTestHelper.createMongoParams(MONGO);
         Properties props = mongoParams.getProperties();
         props.put(MongoRoutedQueueBehave.PROPERTY_FETCH_LIMIT, 1);
-        MongoConnection mongoConnection = new MongoConnection(props);
-        mongoConnection.getMongoCollection(Document.class).deleteMany(new Document());
+        MongoConnection boxMongoConnection = new MongoConnection(props);
+        boxMongoConnection.getMongoCollection(Document.class).deleteMany(new Document());
     }
 
     @Test
@@ -47,7 +50,7 @@ public class LongTasksExecutionOverlappingTest {
         int tasksCount = 10;
         int delaySeconds = 5;
 
-        MongoRoutedQueueBox<JustPojoRouted> queueBox = new MongoRoutedQueueBox<>(
+        QueueBox<JustPojoRouted> queueBox = new MongoRoutedQueueBox<>(
                 mongoParams.getProperties(),
                 JustPojoRouted.class
         );

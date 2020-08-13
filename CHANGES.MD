@@ -1,3 +1,10 @@
+## version 0.2.1
+
+* using mongo-driver-sync
+* accepting only connection string instead of set of servers addresses
+* do not stop executor on queue stop
+* fail tolerance on passing packet to consumer
+
 ## version 0.1.3
 
 * reduce mongo operations count on default settings

@@ -1,4 +1,4 @@
-package net.c0f3.queuebox;
+package net.c0f3.queuebox.mongo;
 
 import gaillard.mongo.MongoConnectionParams;
 import ru.infon.queuebox.mongo.MongoConnection;
@@ -15,7 +15,7 @@ public class MongoTestHelper {
         props.put(MongoConnection.MONGO_DB_USER, MongoContainer.USERNAME);
         props.put(MongoConnection.MONGO_DB_PASSWORD, MongoContainer.PASSWORD);
         props.put(MongoConnection.MONGO_QUEUE_COLLECTION_NAME, COLLECTION_NAME);
-        props.put(MongoConnection.MONGO_DB_URL, String.format("%s:%s",
+        props.put(MongoConnection.MONGO_DB_URL, String.format("mongodb://%s:%s",
                 container.getContainerIpAddress(),
                 container.getMappedPort(MongoContainer.ORIGINAL_PORT)
         ));
