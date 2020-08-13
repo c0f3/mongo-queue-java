@@ -41,8 +41,8 @@ public class LongTasksExecutionOverlappingTest {
         mongoParams = MongoTestHelper.createMongoParams(MONGO);
         Properties props = mongoParams.getProperties();
         props.put(MongoRoutedQueueBehave.PROPERTY_FETCH_LIMIT, 1);
-        MongoConnection mongoConnection = new MongoConnection(props);
-        mongoConnection.getMongoCollection(Document.class).deleteMany(new Document());
+        MongoConnection boxMongoConnection = new MongoConnection(props);
+        boxMongoConnection.getMongoCollection(Document.class).deleteMany(new Document());
     }
 
     @Test

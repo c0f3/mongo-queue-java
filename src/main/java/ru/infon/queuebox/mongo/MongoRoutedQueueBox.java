@@ -2,7 +2,6 @@ package ru.infon.queuebox.mongo;
 
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
-import net.c0f3.queuebox.QueueStatistic;
 import net.c0f3.queuebox.mongo.MongoRoutedQueueStatistic;
 import org.bson.Document;
 import ru.infon.queuebox.QueueBox;
@@ -36,7 +35,7 @@ public class MongoRoutedQueueBox<T extends RoutedMessage> extends QueueBox<T> {
         this.collection = connection.getMongoCollection(Document.class);
         this.threadsCount = getProperties().tryGetIntProperty(
                 PROPERTY_THREADS_COUNT,
-                connection.getMongoClient().getMongoClientOptions().getConnectionsPerHost()
+                connection.getConnectionPoolSize()
         );
     }
 
@@ -68,3 +67,4 @@ public class MongoRoutedQueueBox<T extends RoutedMessage> extends QueueBox<T> {
     }
 
 }
+

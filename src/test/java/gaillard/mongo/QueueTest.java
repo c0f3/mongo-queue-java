@@ -1,6 +1,5 @@
 package gaillard.mongo;
 
-import com.mongodb.MongoClient;
 import com.mongodb.MongoCommandException;
 import com.mongodb.MongoTimeoutException;
 import com.mongodb.client.ListIndexesIterable;
@@ -21,6 +20,7 @@ import ru.infon.queuebox.mongo.MongoConnection;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -36,17 +36,17 @@ public class QueueTest {
     private MongoCollection<Document> collection;
     private MongoQueueCore queue;
     private MongoDatabase db = null;
-    private MongoClient client;
+    private AtomicReference<MongoConnection> connectionRef = new AtomicReference<>(null);
 
     @BeforeEach
     public void setup() {
 
         MongoConnectionParams mongoParams = MongoTestHelper.createMongoParams(MONGO);
         MongoConnection connection = new MongoConnection(mongoParams.getProperties());
+        connectionRef.set(connection);
         try {
-            client = connection.getMongoClient();
+            //client = connection.getMongoClient();
             db = connection.getDatabase();
-
             System.out.println("Using real Mongodb instance");
         } catch (MongoTimeoutException e) {
             System.out.println("MongoTimeoutException caught");
@@ -61,14 +61,17 @@ public class QueueTest {
 
     @AfterEach
     public void closeConnection() {
-        client.close();
+        MongoConnection connection = connectionRef.get();
+        if (connection != null) {
+            connection.close();
+        }
     }
 
     @Test
     public void construct_nullCollection() {
         Assertions.assertThrows(
-                NullPointerException.class,
-                () -> new MongoQueueCore(null)
+            NullPointerException.class,
+            () -> new MongoQueueCore(null)
         );
     }
 
@@ -112,21 +115,21 @@ public class QueueTest {
         assertEquals(4, indexInfo.size());
 
         final Document expectedOne = new Document("running", 1)
-                .append("payload.type", 1)
-                .append("priority", 1)
-                .append("created", 1)
-                .append("payload.boo", -1)
-                .append("earliestGet", 1);
+            .append("payload.type", 1)
+            .append("priority", 1)
+            .append("created", 1)
+            .append("payload.boo", -1)
+            .append("earliestGet", 1);
         assertEquals(expectedOne, indexInfo.get(1).get("key"));
 
         final Document expectedTwo = new Document("running", 1).append("resetTimestamp", 1);
         assertEquals(expectedTwo, indexInfo.get(2).get("key"));
 
         final Document expectedThree = new Document("running", 1)
-                .append("payload.another.sub", 1)
-                .append("priority", 1)
-                .append("created", 1)
-                .append("earliestGet", 1);
+            .append("payload.another.sub", 1)
+            .append("priority", 1)
+            .append("created", 1)
+            .append("earliestGet", 1);
         assertEquals(expectedThree, indexInfo.get(3).get("key"));
     }
 
@@ -151,20 +154,20 @@ public class QueueTest {
     public void ensureGetIndex_tooLongCollectionName() {
         //121 chars
         final String collectionName = "messages01234567890123456789012345678901234567890123456789"
-                + "012345678901234567890123456789012345678901234567890123456789012";
+            + "012345678901234567890123456789012345678901234567890123456789012";
 
         queue = new MongoQueueCore(db.getCollection(collectionName));
         Assertions.assertThrows(
-                MongoCommandException.class,
-                () -> queue.ensureGetIndex()
+            MongoCommandException.class,
+            () -> queue.ensureGetIndex()
         );
     }
 
     @Test
     public void ensureGetIndex_badBeforeSortValue() {
         Assertions.assertThrows(
-                IllegalArgumentException.class,
-                () -> queue.ensureGetIndex(new Document("field", "NotAnInt"))
+            IllegalArgumentException.class,
+            () -> queue.ensureGetIndex(new Document("field", "NotAnInt"))
         );
 
     }
@@ -172,24 +175,24 @@ public class QueueTest {
     @Test
     public void ensureGetIndex_badAfterSortValue() {
         Assertions.assertThrows(
-                IllegalArgumentException.class,
-                () -> queue.ensureGetIndex(new Document(), new Document("field", "NotAnInt"))
+            IllegalArgumentException.class,
+            () -> queue.ensureGetIndex(new Document(), new Document("field", "NotAnInt"))
         );
     }
 
     @Test
     public void ensureGetIndex_nullBeforeSort() {
         Assertions.assertThrows(
-                NullPointerException.class,
-                () -> queue.ensureGetIndex(null)
+            NullPointerException.class,
+            () -> queue.ensureGetIndex(null)
         );
     }
 
     @Test
     public void ensureGetIndex_nullAfterSort() {
         Assertions.assertThrows(
-                NullPointerException.class,
-                () -> queue.ensureGetIndex(new Document(), null)
+            NullPointerException.class,
+            () -> queue.ensureGetIndex(new Document(), null)
         );
 
     }
@@ -215,16 +218,16 @@ public class QueueTest {
     @Test
     public void ensureCountIndex_badValue() {
         Assertions.assertThrows(
-                IllegalArgumentException.class,
-                () -> queue.ensureCountIndex(new Document("field", "NotAnInt"), true)
+            IllegalArgumentException.class,
+            () -> queue.ensureCountIndex(new Document("field", "NotAnInt"), true)
         );
     }
 
     @Test
     public void ensureCountIndex_null() {
         Assertions.assertThrows(
-                NullPointerException.class,
-                () -> queue.ensureCountIndex(null, true)
+            NullPointerException.class,
+            () -> queue.ensureCountIndex(null, true)
         );
 
     }
@@ -232,8 +235,8 @@ public class QueueTest {
     @Test
     public void get_nullQuery() {
         Assertions.assertThrows(
-                NullPointerException.class,
-                () -> queue.get(null, Integer.MAX_VALUE)
+            NullPointerException.class,
+            () -> queue.get(null, Integer.MAX_VALUE)
         );
     }
 
@@ -432,16 +435,16 @@ public class QueueTest {
     @Test
     public void count_nullQuery() {
         Assertions.assertThrows(
-                NullPointerException.class,
-                () -> queue.count(null)
+            NullPointerException.class,
+            () -> queue.count(null)
         );
     }
 
     @Test
     public void count_runningNullQuery() {
         Assertions.assertThrows(
-                NullPointerException.class,
-                () -> queue.count(null, true)
+            NullPointerException.class,
+            () -> queue.count(null, true)
         );
     }
 
@@ -462,8 +465,8 @@ public class QueueTest {
     @Test
     public void ack_wrongIdType() {
         Assertions.assertThrows(
-                IllegalArgumentException.class,
-                () -> queue.ack(new Document("id", false))
+            IllegalArgumentException.class,
+            () -> queue.ack(new Document("id", false))
         );
 
     }
@@ -471,8 +474,8 @@ public class QueueTest {
     @Test
     public void ack_null() {
         Assertions.assertThrows(
-                NullPointerException.class,
-                () -> queue.ack(null)
+            NullPointerException.class,
+            () -> queue.ack(null)
         );
     }
 
@@ -499,12 +502,12 @@ public class QueueTest {
         assertTrue(actualCreated.compareTo(timeBeforeAckSend) >= 0 && actualCreated.compareTo(new Date()) <= 0);
 
         final Document expected = new Document("_id", resultOne.get("id"))
-                .append("payload", new Document("key", 1))
-                .append("running", false)
-                .append("resetTimestamp", new Date(Long.MAX_VALUE))
-                .append("earliestGet", expectedEarliestGet)
-                .append("priority", expectedPriority)
-                .append("created", actual.get("created"));
+            .append("payload", new Document("key", 1))
+            .append("running", false)
+            .append("resetTimestamp", new Date(Long.MAX_VALUE))
+            .append("earliestGet", expectedEarliestGet)
+            .append("priority", expectedPriority)
+            .append("created", actual.get("created"));
 
         assertEquals(expected, actual);
     }
@@ -512,8 +515,8 @@ public class QueueTest {
     @Test
     public void ackSend_wrongIdType() {
         Assertions.assertThrows(
-                IllegalArgumentException.class,
-                () -> queue.ackSend(new Document("id", 5), new Document())
+            IllegalArgumentException.class,
+            () -> queue.ackSend(new Document("id", 5), new Document())
         );
 
     }
@@ -521,8 +524,8 @@ public class QueueTest {
     @Test
     public void ackSend_nanPriority() {
         Assertions.assertThrows(
-                IllegalArgumentException.class,
-                () -> queue.ackSend(new Document("id", ObjectId.get()), new Document(), new Date(), Double.NaN)
+            IllegalArgumentException.class,
+            () -> queue.ackSend(new Document("id", ObjectId.get()), new Document(), new Date(), Double.NaN)
         );
 
     }
@@ -530,8 +533,8 @@ public class QueueTest {
     @Test
     public void ackSend_nullMessage() {
         Assertions.assertThrows(
-                NullPointerException.class,
-                () -> queue.ackSend(null, new Document())
+            NullPointerException.class,
+            () -> queue.ackSend(null, new Document())
         );
 
     }
@@ -539,8 +542,8 @@ public class QueueTest {
     @Test
     public void ackSend_nullPayload() {
         Assertions.assertThrows(
-                NullPointerException.class,
-                () -> queue.ackSend(new Document("id", ObjectId.get()), null)
+            NullPointerException.class,
+            () -> queue.ackSend(new Document("id", ObjectId.get()), null)
         );
 
     }
@@ -548,8 +551,8 @@ public class QueueTest {
     @Test
     public void ackSend_nullEarliestGet() {
         Assertions.assertThrows(
-                NullPointerException.class,
-                () -> queue.ackSend(new Document("id", ObjectId.get()), new Document(), null)
+            NullPointerException.class,
+            () -> queue.ackSend(new Document("id", ObjectId.get()), new Document(), null)
         );
 
     }
@@ -577,12 +580,12 @@ public class QueueTest {
         assertTrue(actualCreated.compareTo(timeBeforeRequeue) >= 0 && actualCreated.compareTo(new Date()) <= 0);
 
         final Document expected = new Document("_id", resultOne.get("id"))
-                .append("payload", new Document("key", 0))
-                .append("running", false)
-                .append("resetTimestamp", new Date(Long.MAX_VALUE))
-                .append("earliestGet", expectedEarliestGet)
-                .append("priority", expectedPriority)
-                .append("created", actual.get("created"));
+            .append("payload", new Document("key", 0))
+            .append("running", false)
+            .append("resetTimestamp", new Date(Long.MAX_VALUE))
+            .append("earliestGet", expectedEarliestGet)
+            .append("priority", expectedPriority)
+            .append("created", actual.get("created"));
 
         assertEquals(expected, actual);
     }
@@ -590,8 +593,8 @@ public class QueueTest {
     @Test
     public void requeue_wrongIdType() {
         Assertions.assertThrows(
-                IllegalArgumentException.class,
-                () -> queue.requeue(new Document("id", new Document()))
+            IllegalArgumentException.class,
+            () -> queue.requeue(new Document("id", new Document()))
         );
 
     }
@@ -599,8 +602,8 @@ public class QueueTest {
     @Test
     public void requeue_nanPriority() {
         Assertions.assertThrows(
-                IllegalArgumentException.class,
-                () -> queue.requeue(new Document("id", ObjectId.get()), new Date(), Double.NaN)
+            IllegalArgumentException.class,
+            () -> queue.requeue(new Document("id", ObjectId.get()), new Date(), Double.NaN)
         );
 
     }
@@ -608,8 +611,8 @@ public class QueueTest {
     @Test
     public void requeue_nullMessage() {
         Assertions.assertThrows(
-                NullPointerException.class,
-                () -> queue.requeue(null)
+            NullPointerException.class,
+            () -> queue.requeue(null)
         );
 
     }
@@ -617,8 +620,8 @@ public class QueueTest {
     @Test
     public void requeue_nullEarliestGet() {
         Assertions.assertThrows(
-                NullPointerException.class,
-                () -> queue.requeue(new Document("id", ObjectId.get()), null)
+            NullPointerException.class,
+            () -> queue.requeue(new Document("id", ObjectId.get()), null)
         );
 
     }
@@ -642,12 +645,12 @@ public class QueueTest {
         assertTrue(actualCreated.compareTo(timeBeforeSend) >= 0 && actualCreated.compareTo(new Date()) <= 0);
 
         final Document expected = new Document("_id", actual.get("_id"))
-                .append("payload", new Document("key", 0))
-                .append("running", false)
-                .append("resetTimestamp", new Date(Long.MAX_VALUE))
-                .append("earliestGet", expectedEarliestGet)
-                .append("priority", expectedPriority)
-                .append("created", actual.get("created"));
+            .append("payload", new Document("key", 0))
+            .append("running", false)
+            .append("resetTimestamp", new Date(Long.MAX_VALUE))
+            .append("earliestGet", expectedEarliestGet)
+            .append("priority", expectedPriority)
+            .append("created", actual.get("created"));
 
         assertEquals(expected, actual);
     }
@@ -655,8 +658,8 @@ public class QueueTest {
     @Test
     public void send_nanPriority() {
         Assertions.assertThrows(
-                IllegalArgumentException.class,
-                () -> queue.send(new Document("id", ObjectId.get()), new Date(), Double.NaN)
+            IllegalArgumentException.class,
+            () -> queue.send(new Document("id", ObjectId.get()), new Date(), Double.NaN)
         );
 
     }
@@ -664,16 +667,16 @@ public class QueueTest {
     @Test
     public void send_nullMessage() {
         Assertions.assertThrows(
-                NullPointerException.class,
-                () -> queue.send(null)
+            NullPointerException.class,
+            () -> queue.send(null)
         );
     }
 
     @Test
     public void send_nullEarliestGet() {
         Assertions.assertThrows(
-                NullPointerException.class,
-                () -> queue.send(new Document("id", ObjectId.get()), null)
+            NullPointerException.class,
+            () -> queue.send(new Document("id", ObjectId.get()), null)
         );
     }
 }

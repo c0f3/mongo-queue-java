@@ -27,7 +27,7 @@ public class MongoAnonymousConnectionTest {
         Properties props = new Properties();
         props.put(MongoConnection.MONGO_DB_DB, MongoContainer.DATABASE);
         props.put(MongoConnection.MONGO_QUEUE_COLLECTION_NAME, collectionName);
-        props.put(MongoConnection.MONGO_DB_URL, String.format("%s:%s",
+        props.put(MongoConnection.MONGO_DB_URL, String.format("mongodb://%s:%s",
                 MONGO.getContainerIpAddress(),
                 MONGO.getMappedPort(MongoContainer.ORIGINAL_PORT)
         ));

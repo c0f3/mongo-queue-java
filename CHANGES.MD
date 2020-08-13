@@ -1,3 +1,8 @@
+## version 0.2.1
+
+* using mongo-driver-sync
+* accepting only connection string instead of set of servers addresses
+
 ## version 0.1.4
 
 * do not stop executor on queue stop
