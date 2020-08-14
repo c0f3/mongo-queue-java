@@ -33,7 +33,7 @@
 
     <groupId>net.c0f3.labs</groupId>
     <artifactId>queue-box</artifactId>
-    <version>0.2.2-SNAPSHOT</version>
+    <version>0.2.1-SNAPSHOT</version>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
