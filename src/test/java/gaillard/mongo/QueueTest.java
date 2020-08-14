@@ -343,12 +343,13 @@ public class QueueTest {
 
     @Test
     public void get_wait() {
-        final Date start = new Date();
+        final long start = System.nanoTime();
 
         queue.get(new Document(), Integer.MAX_VALUE, 200);
 
-        final long elapsed = new Date().getTime() - start.getTime();
+        final long elapsed = (System.nanoTime() - start) / 1000000;
 
+        System.out.println("get_wait elapsed time is: " + elapsed);
         assertTrue(elapsed >= 200);
         assertTrue(elapsed < 400);
     }
